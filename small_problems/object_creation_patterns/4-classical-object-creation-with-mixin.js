@@ -1,4 +1,4 @@
-// https://launchschool.com/exercises/c32e20ee
+// https://launchschool.com/exercises/ef1ddc08
 
 // Person constructor
 function Person(firstName, lastName, age, gender) {
@@ -72,31 +72,57 @@ GraduateStudent.prototype.research = function() {
 };
 GraduateStudent.prototype.constructor = GraduateStudent;
 
-// Test cases
-const person = new Person('foo', 'bar', 21, 'gender');
-console.log(person instanceof Person);     // logs true
-person.eat();                              // logs 'Eating'
-person.communicate();                      // logs 'Communicating'
-person.sleep();                            // logs 'Sleeping'
-console.log(person.fullName());            // logs 'foo bar'
+// extend function
+function delegate(callingObject, methodOwner, methodName) {
+  const args = Array.prototype.slice.call(arguments, 3);
+  return () => methodOwner[methodName].apply(callingObject, args);
+}
 
-const doctor = new Doctor('foo', 'bar', 21, 'gender', 'Pediatrics');
+function extend(instance, mixin) {
+  Object.keys(mixin).forEach(key => {
+    instance[key] = delegate(instance, mixin, key);
+  });
+
+  return instance;
+}
+
+// Professional mixin
+const Professional = {
+  invoice() {
+    console.log(`${this.fullName()} is Billing customer`);
+  },
+
+  payTax() {
+    console.log(`${this.fullName()} is Paying taxes`);
+  },
+};
+
+// Test cases
+const doctor = extend(new Doctor('foo', 'bar', 21, 'gender', 'Pediatrics'), Professional);
 console.log(doctor instanceof Person);     // logs true
 console.log(doctor instanceof Doctor);     // logs true
 doctor.eat();                              // logs 'Eating'
 doctor.communicate();                      // logs 'Communicating'
 doctor.sleep();                            // logs 'Sleeping'
-console.log(doctor.fullName());            // logs 'foo bar'
+console.log(doctor.fullName());            // logs 'foo bar'S
 doctor.diagnose();                         // logs 'Diagnosing'
 
-const graduateStudent = new GraduateStudent('foo', 'bar', 21, 'gender', 'BS Industrial Engineering', 'MS Industrial Engineering');
-// logs true for next three statements
-console.log(graduateStudent instanceof Person);
-console.log(graduateStudent instanceof Student);
-console.log(graduateStudent instanceof GraduateStudent);
-graduateStudent.eat();                     // logs 'Eating'
-graduateStudent.communicate();             // logs 'Communicating'
-graduateStudent.sleep();                   // logs 'Sleeping'
-console.log(graduateStudent.fullName());   // logs 'foo bar'
-graduateStudent.study();                   // logs 'Studying'
-graduateStudent.research();                // logs 'Researching'
+const professor = extend(new Professor('foo', 'bar', 21, 'gender', 'Systems Engineering'), Professional);
+console.log(professor instanceof Person);     // logs true
+console.log(professor instanceof Professor);  // logs true
+professor.eat();                              // logs 'Eating'
+professor.communicate();                      // logs 'Communicating'
+professor.sleep();                            // logs 'Sleeping'
+console.log(professor.fullName());            // logs 'foo bar'
+professor.teach();                            // logs 'Teaching'
+
+doctor.invoice();                          // logs 'foo bar is Billing customer'
+doctor.payTax();                           // logs 'foo bar Paying taxes'
+
+Professional.invoice = function() {
+  console.log(`${this.fullName()} is Asking customer to pay`);
+};
+
+doctor.invoice();                          // logs 'foo bar is Asking customer to pay'
+professor.invoice();                       // logs 'foo bar is Asking customer to pay'
+professor.payTax();                        // logs 'foo bar Paying taxes'
